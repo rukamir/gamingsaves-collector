@@ -3,8 +3,8 @@ if (process.env.NODE_ENV !== 'production') {
 }
 const logger = require('pino')();
 const db = require('./services/db');
-const psn = require('./deals/psn');
-psn.retreiveData();
+const nin = require('./deals/nintendo');
+nin.retrieveData();
 
 var testfun = async () => {
   try {

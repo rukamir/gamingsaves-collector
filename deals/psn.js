@@ -17,7 +17,7 @@ const instance = axios.create({
 const SRC = 'playstation.com';
 
 module.exports = {
-  retreiveData: async () => {
+  retrieveData: async () => {
     logger.info('Starting PSN data retrieval');
     const updated = new Date();
     var saleCount = 0;

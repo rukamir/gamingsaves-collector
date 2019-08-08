@@ -1,4 +1,6 @@
+const logger = require('pino')();
 const axios = require('axios');
+const db = require('../services/db');
 
 const instance = axios.create({
   baseURL:
@@ -12,6 +14,7 @@ const instance = axios.create({
   }
 });
 
+const SRC = 'nintendo.com';
 // eShop
 const createNintendoQueryBody = (page, resultsPerPage) => {
   return {
@@ -27,4 +30,55 @@ const createNintendoQueryBody = (page, resultsPerPage) => {
       }
     ]
   };
+};
+
+module.exports = {
+  retrieveData: async () => {
+    logger.info('Starting Nintendo retrieval');
+    const updated = new Date();
+    await db.deleteBySource(SRC);
+    try {
+      const resp = await instance.post('', createNintendoQueryBody(0, 30));
+      const salesCount = resp.data.results[1].facets.generalFilters.Deals;
+      var currentIndex = 0;
+      const groupSize = 42;
+      var requestList = [];
+      while (currentIndex < salesCount / groupSize) {
+        requestList.push(instance.post('', createNintendoQueryBody(currentIndex, groupSize)));
+        currentIndex += 1;
+      }
+
+      Promise.all(requestList)
+        .then(resp => {
+          resp.forEach(async r => {
+            var formatedGamesList = r.data.results[0].hits.map(e => {
+              const { nsuid, title, platform = 'unavailable', boxArt, msrp, salePrice, url } = e;
+              // insert to s3
+              return {
+                id: nsuid,
+                title,
+                platform,
+                thumbnail_url: `https://nintendo.com${boxArt}`,
+                thumbnail_key: 'a',
+                url: `https://nintendo.com${url}`,
+                msrp,
+                list: salePrice,
+                source: SRC,
+                updated
+              };
+            });
+            try {
+              await db.insertList(formatedGamesList);
+            } catch (error) {
+              logger.error('1 ' + error);
+            }
+          });
+        })
+        .catch(error => {
+          logger.error('2 ' + error);
+        });
+    } catch (error) {
+      logger.error('3 ' + error);
+    }
+  }
 };
