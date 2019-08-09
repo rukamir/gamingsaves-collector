@@ -1,6 +1,7 @@
 const logger = require('pino')();
 const axios = require('axios');
 const db = require('../services/db');
+const s3 = require('../services/s3');
 
 const instance = axios.create({
   baseURL:
@@ -15,6 +16,8 @@ const instance = axios.create({
 });
 
 const SRC = 'nintendo.com';
+const BUCKET_NAME = 'nintendo';
+s3.CheckForBucketCreateIfNotExist(BUCKET_NAME);
 // eShop
 const createNintendoQueryBody = (page, resultsPerPage) => {
   return {
@@ -53,12 +56,26 @@ module.exports = {
           resp.forEach(async r => {
             var formatedGamesList = r.data.results[0].hits.map(e => {
               const { nsuid, title, platform = 'unavailable', boxArt, msrp, salePrice, url } = e;
+              const thumbnail_url = `https://nintendo.com${boxArt}`;
               // insert to s3
+              s3.CheckForExistingKey(BUCKET_NAME, nsuid, (error, data) => {
+                if (error) {
+                  logger.info(`Creating new object ${nsuid}`);
+                  axios
+                    .get(thumbnail_url, {
+                      responseType: 'stream'
+                    })
+                    .then(resp => resp.data.pipe(s3.uploadFromStream(BUCKET_NAME, nsuid)))
+                    .catch(err =>
+                      logger.error(`Failed to upload ${s3.uploadFromStream}`, err.message)
+                    );
+                }
+              });
               return {
                 id: nsuid,
                 title,
                 platform,
-                thumbnail_url: `https://nintendo.com${boxArt}`,
+                thumbnail_url,
                 thumbnail_key: 'a',
                 url: `https://nintendo.com${url}`,
                 msrp,
@@ -68,7 +85,7 @@ module.exports = {
               };
             });
             try {
-              await db.insertList(formatedGamesList);
+              db.insertList(formatedGamesList);
             } catch (error) {
               logger.error('1 ' + error);
             }

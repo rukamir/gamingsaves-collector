@@ -12,6 +12,7 @@
   "author": "Jimmy Roland",
   "license": "ISC",
   "dependencies": {
+    "aws-sdk": "^2.505.0",
     "axios": "^0.19.0",
     "dotenv": "^8.0.0",
     "knex": "^0.19.1",
