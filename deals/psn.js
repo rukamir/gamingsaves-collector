@@ -1,6 +1,7 @@
 const logger = require('pino')();
 const axios = require('axios');
 const db = require('../services/db');
+const s3 = require('../services/s3');
 // axios.interceptors.request.use(request => {
 //   logger.info('Starting Request', request);
 //   return request;
@@ -14,7 +15,9 @@ const instance = axios.create({
       'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.100 Safari/537.36'
   }
 });
+const BUCKET_NAME = 'psn';
 const SRC = 'playstation.com';
+s3.CheckForBucketCreateIfNotExist(BUCKET_NAME);
 
 module.exports = {
   retrieveData: async () => {
@@ -61,6 +64,20 @@ module.exports = {
               const memberPrice = parseFloat(
                 attributes.skus[0].prices['plus-user']['actual-price'].display.split('$')[1]
               );
+              // add thumbnail to s3
+              s3.CheckForExistingKey(BUCKET_NAME, id, (error, data) => {
+                if (error) {
+                  logger.info(`Creating new object ${id}`);
+                  axios
+                    .get(thumbnailURL, {
+                      responseType: 'stream'
+                    })
+                    .then(resp => resp.data.pipe(s3.uploadFromStream(BUCKET_NAME, id)))
+                    .catch(err =>
+                      logger.error(`Failed to upload ${s3.uploadFromStream}`, err.message)
+                    );
+                }
+              });
               return {
                 id,
                 title: attributes.name,

@@ -4,5 +4,5 @@ if (process.env.NODE_ENV !== 'production') {
 const logger = require('pino')();
 const db = require('./services/db');
 
-const nin = require('./deals/nintendo');
-nin.retrieveData();
+const psn = require('./deals/psn');
+psn.retrieveData();
