@@ -73,9 +73,7 @@ module.exports = {
                       responseType: 'stream'
                     })
                     .then(resp => resp.data.pipe(s3.uploadFromStream(BUCKET_NAME, id)))
-                    .catch(err =>
-                      logger.error(`Failed to upload ${s3.uploadFromStream}`, err.message)
-                    );
+                    .catch(err => logger.error(`Failed to upload ${id}`, err.message));
                 }
               });
               return {

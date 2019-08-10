@@ -40,7 +40,7 @@ module.exports = {
         })
         .map(urlQuery => {
           return axios.get(urlQuery, {
-            timeout: 20000,
+            // timeout: 25000,
             headers: {
               Origin: 'https://www.xbox.com',
               Referer: 'https://www.xbox.com/en-US/games/xbox-one?cat=onsale',
@@ -53,7 +53,6 @@ module.exports = {
       Promise.all(requestList)
         .then(respList => {
           respList.forEach(async resp => {
-            logger.info(resp.duration);
             const gameData = resp.data.Products.reduce((filtered, game) => {
               const { ListPrice, MSRP } = _get(
                 game,
@@ -68,19 +67,36 @@ module.exports = {
                   MSRP
                 } = game.DisplaySkuAvailabilities[0].Availabilities[0].OrderManagementData.Price;
                 const title = game.LocalizedProperties[0].ProductTitle;
+                const { ProductTitle, Images } = game.LocalizedProperties[0];
+                const thumbnail_url = `https:${
+                  Images.find(image => image.ImagePurpose == 'Poster').Uri
+                }`;
                 const linkTitle = title
                   .replace(/[^a-zA-Z0-9- ]/g)
                   .toLowerCase()
                   .replace(/[ ]/g, '-');
 
+                // s3 operations
+                s3.CheckForExistingKey(BUCKET_NAME, ProductId, (error, data) => {
+                  if (error) {
+                    logger.info(`Creating new object ${ProductId}`);
+                    axios
+                      .get(thumbnail_url, {
+                        responseType: 'stream'
+                      })
+                      .then(resp => resp.data.pipe(s3.uploadFromStream(BUCKET_NAME, ProductId)))
+                      .catch(err => logger.error(`Failed to upload ${ProductId}`, err.message));
+                  }
+                });
+
                 filtered.push({
                   id: ProductId,
-                  title,
+                  title: ProductTitle,
                   platform: 'Xbox One',
                   list: ListPrice,
                   msrp: MSRP,
                   url: `https://www.microsoft.com/en-us/p/${linkTitle}/${ProductId}`,
-                  thumbnail_url: `https:${game.LocalizedProperties[0].Images[0].Uri}`,
+                  thumbnail_url,
                   thumbnail_key: 'a',
                   source: SRC,
                   updated
@@ -88,7 +104,7 @@ module.exports = {
               }
               return filtered;
             }, []);
-            // do something with gameData
+
             try {
               logger.info(`${SRC} Inserting ${gameData.length}`);
               await db.insertList(gameData);
