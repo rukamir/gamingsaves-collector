@@ -3,6 +3,7 @@ if (process.env.NODE_ENV !== 'production') {
 }
 const logger = require('pino')();
 const db = require('./services/db');
+const data_retrieve = require('./services/data_retrieve');
 
-const psn = require('./deals/psn');
-psn.retrieveData();
+// start polling for data
+data_retrieve.pull();
