@@ -19,6 +19,14 @@ const BUCKET_NAME = 'psn';
 const SRC = 'playstation.com';
 s3.CheckForBucketCreateIfNotExist(BUCKET_NAME);
 
+const getRating = psnRatingUrl => {
+  const rating = psnRatingUrl
+    .split('/')
+    .pop()
+    .split('.')[0];
+  return rating.toUpperCase();
+};
+
 module.exports = {
   retrieveData: async () => {
     logger.info('Starting PSN data retrieval');
@@ -54,6 +62,10 @@ module.exports = {
             var gameList = gamesContentTypeOne.map(e => {
               const { id, attributes } = e;
               const thumbnailURL = attributes['thumbnail-url-base'];
+              const genres = attributes.genres;
+              const release = attributes['release-date'];
+              const description = attributes['long-description'];
+              const rating = getRating(attributes['content-rating'].url);
               var thumbnailKey = 'a';
               const msrp = parseFloat(
                 attributes.skus[0].prices['plus-user']['strikethrough-price'].display.split('$')[1]
@@ -87,6 +99,9 @@ module.exports = {
                 memberPrice,
                 url: `https://store.playstation.com/en-us/product/${id}`,
                 source: SRC,
+                description,
+                rating,
+                release: new Date(release),
                 updated
               };
             });
