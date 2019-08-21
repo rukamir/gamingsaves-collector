@@ -8,7 +8,7 @@ const s3 = require('../services/s3');
 // });
 const instance = axios.create({
   baseURL: 'https://store.playstation.com/valkyrie-api',
-  timeout: 2000,
+  timeout: 8000,
   headers: {
     Referer: 'https://store.playstation.com/en-us/grid/STORE-MSF77008-ALLDEALS/1',
     'User-Agent':
@@ -67,13 +67,13 @@ module.exports = {
               // add thumbnail to s3
               s3.CheckForExistingKey(BUCKET_NAME, id, (error, data) => {
                 if (error) {
-                  logger.info(`Creating new object ${id}`);
+                  logger.info(`${SRC} Creating new object ${id}`);
                   axios
                     .get(thumbnailURL, {
                       responseType: 'stream'
                     })
                     .then(resp => resp.data.pipe(s3.uploadFromStream(BUCKET_NAME, id)))
-                    .catch(err => logger.error(`Failed to upload ${id}`, err.message));
+                    .catch(err => logger.error(`${SRC} Failed to upload ${id}`, err.message));
                 }
               });
               return {
@@ -92,8 +92,8 @@ module.exports = {
             });
             // insert into db
             try {
+              logger.info(`${SRC} Inserting ${gameList.length}`);
               var dbres = await db.insertList(gameList);
-              // save to s3
             } catch (error) {
               logger.error(error.message);
             }

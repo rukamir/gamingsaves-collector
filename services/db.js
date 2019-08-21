@@ -36,8 +36,10 @@ const convertToDBEntry = item => {
     thumbnail_url: item.thumbnail_url,
     thumbnail_key: item.thumbnail_key,
     source: item.source,
-    updated: DateString(item.updated),
-    created: DateString(item.updated)
+    desc: item.description,
+    release: item.release,
+    rating: item.rating,
+    updated: DateString(item.updated)
   };
 };
 

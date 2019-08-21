@@ -79,13 +79,15 @@ module.exports = {
                 // s3 operations
                 s3.CheckForExistingKey(BUCKET_NAME, ProductId, (error, data) => {
                   if (error) {
-                    logger.info(`Creating new object ${ProductId}`);
+                    logger.info(`${SRC} Creating new object ${ProductId}`);
                     axios
                       .get(thumbnail_url, {
                         responseType: 'stream'
                       })
                       .then(resp => resp.data.pipe(s3.uploadFromStream(BUCKET_NAME, ProductId)))
-                      .catch(err => logger.error(`Failed to upload ${ProductId}`, err.message));
+                      .catch(err =>
+                        logger.error(`${SRC} Failed to upload ${ProductId}`, err.message)
+                      );
                   }
                 });
 
@@ -105,11 +107,13 @@ module.exports = {
               return filtered;
             }, []);
 
-            try {
-              logger.info(`${SRC} Inserting ${gameData.length}`);
-              await db.insertList(gameData);
-            } catch (error) {
-              logger.error(error.message, error.stack);
+            if (gameData.length) {
+              try {
+                logger.info(`${SRC} Inserting ${gameData.length}`);
+                await db.insertList(gameData);
+              } catch (error) {
+                logger.error(error.message, error.stack);
+              }
             }
           });
         })

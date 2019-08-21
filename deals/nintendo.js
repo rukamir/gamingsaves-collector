@@ -55,18 +55,30 @@ module.exports = {
         .then(resp => {
           resp.forEach(async r => {
             var formatedGamesList = r.data.results[0].hits.map(e => {
-              const { nsuid, title, platform = 'unavailable', boxArt, msrp, salePrice, url } = e;
+              const {
+                nsuid,
+                title,
+                platform = 'unavailable',
+                boxArt,
+                msrp,
+                salePrice,
+                url,
+                description,
+                releaseDateMask,
+                esrb,
+                categories
+              } = e;
               const thumbnail_url = `https://nintendo.com${boxArt}`;
               // insert to s3
               s3.CheckForExistingKey(BUCKET_NAME, nsuid, (error, data) => {
                 if (error) {
-                  logger.info(`Creating new object ${nsuid}`);
+                  logger.info(`${SRC} Creating new object ${nsuid}`);
                   axios
                     .get(thumbnail_url, {
                       responseType: 'stream'
                     })
                     .then(resp => resp.data.pipe(s3.uploadFromStream(BUCKET_NAME, nsuid)))
-                    .catch(err => logger.error(`Failed to upload ${nsuid}`, err.message));
+                    .catch(err => logger.error(`${SRC} Failed to upload ${nsuid}`, err.message));
                 }
               });
               return {
@@ -79,11 +91,16 @@ module.exports = {
                 msrp,
                 list: salePrice,
                 source: SRC,
-                updated
+                description,
+                updated,
+                release: new Date(releaseDateMask),
+                rating: esrb,
+                genre: categories
               };
             });
             try {
-              db.insertList(formatedGamesList);
+              logger.info(`${SRC} Inserting ${formatedGamesList.length}`);
+              await db.insertList(formatedGamesList);
             } catch (error) {
               logger.error('1 ' + error);
             }
