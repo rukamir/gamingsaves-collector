@@ -67,7 +67,11 @@ module.exports = {
                   MSRP
                 } = game.DisplaySkuAvailabilities[0].Availabilities[0].OrderManagementData.Price;
                 const title = game.LocalizedProperties[0].ProductTitle;
-                const { ProductTitle, Images } = game.LocalizedProperties[0];
+                const { ProductTitle, Images, ShortDescription } = game.LocalizedProperties[0];
+                const { OriginalReleaseDate, ContentRatings } = game.MarketProperties[0];
+                const rating = ContentRatings.find(rating => rating.RatingSystem == 'ESRB')
+                  .RatingId.split(':')
+                  .pop();
                 const thumbnail_url = `https:${
                   Images.find(image => image.ImagePurpose == 'Poster').Uri
                 }`;
@@ -100,6 +104,9 @@ module.exports = {
                   url: `https://www.microsoft.com/en-us/p/${linkTitle}/${ProductId}`,
                   thumbnail_url,
                   thumbnail_key: 'a',
+                  release: new Date(OriginalReleaseDate),
+                  rating,
+                  description: ShortDescription,
                   source: SRC,
                   updated
                 });
