@@ -86,7 +86,7 @@ module.exports = {
                 title,
                 platform,
                 thumbnail_url,
-                thumbnail_key: 'a',
+                thumbnail_key: `${BUCKET_NAME}/${nsuid}`,
                 url: `https://nintendo.com${url}`,
                 msrp,
                 list: salePrice,

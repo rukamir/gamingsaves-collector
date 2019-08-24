@@ -103,7 +103,7 @@ module.exports = {
                   msrp: MSRP,
                   url: `https://www.microsoft.com/en-us/p/${linkTitle}/${ProductId}`,
                   thumbnail_url,
-                  thumbnail_key: 'a',
+                  thumbnail_key: `${BUCKET_NAME}/${ProductId}`,
                   release: new Date(OriginalReleaseDate),
                   rating,
                   description: ShortDescription,

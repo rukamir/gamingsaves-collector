@@ -66,7 +66,6 @@ module.exports = {
               const release = attributes['release-date'];
               const description = attributes['long-description'];
               const rating = getRating(attributes['content-rating'].url);
-              var thumbnailKey = 'a';
               const msrp = parseFloat(
                 attributes.skus[0].prices['plus-user']['strikethrough-price'].display.split('$')[1]
               );
@@ -93,7 +92,7 @@ module.exports = {
                 title: attributes.name,
                 platform: attributes.platforms[0],
                 thumbnail_url: thumbnailURL,
-                thumbnail_key: thumbnailKey,
+                thumbnail_key: `${BUCKET_NAME}/${id}`,
                 msrp,
                 list,
                 memberPrice,
