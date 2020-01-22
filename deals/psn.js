@@ -16,7 +16,7 @@ const instance = axios.create({
   }
 });
 const BUCKET_NAME = 'psn';
-const SRC = 'playstation.com';
+const SRC = 'psn';
 s3.CheckForBucketCreateIfNotExist(BUCKET_NAME);
 
 const getRating = psnRatingUrl => {
@@ -93,7 +93,7 @@ module.exports = {
                 title: attributes.name,
                 platform: attributes.platforms[0],
                 thumbnail_url: thumbnailURL,
-                thumbnail_key: `${BUCKET_NAME}/${id}`,
+                thumbnail_key: `${id}`,
                 msrp,
                 list,
                 memberPrice,

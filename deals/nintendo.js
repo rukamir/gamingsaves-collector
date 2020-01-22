@@ -15,7 +15,7 @@ const instance = axios.create({
   }
 });
 
-const SRC = 'nintendo.com';
+const SRC = 'nintendo';
 const BUCKET_NAME = 'nintendo';
 s3.CheckForBucketCreateIfNotExist(BUCKET_NAME);
 // eShop
@@ -86,7 +86,7 @@ module.exports = {
                 title,
                 platform,
                 thumbnail_url,
-                thumbnail_key: `${BUCKET_NAME}/${nsuid}`,
+                thumbnail_key: `${nsuid}`,
                 url: `https://nintendo.com${url}`,
                 msrp,
                 list: salePrice,

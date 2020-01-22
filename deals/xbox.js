@@ -4,7 +4,7 @@ const db = require('../services/db');
 const s3 = require('../services/s3');
 const _get = require('lodash/get');
 
-const SRC = 'xbox.com';
+const SRC = 'xbox';
 const BUCKET_NAME = 'xbox';
 s3.CheckForBucketCreateIfNotExist(BUCKET_NAME);
 
@@ -103,7 +103,7 @@ module.exports = {
                   msrp: MSRP,
                   url: `https://www.microsoft.com/en-us/p/${linkTitle}/${ProductId}`,
                   thumbnail_url,
-                  thumbnail_key: `${BUCKET_NAME}/${ProductId}`,
+                  thumbnail_key: `${ProductId}`,
                   release: new Date(OriginalReleaseDate),
                   rating,
                   description: ShortDescription,
