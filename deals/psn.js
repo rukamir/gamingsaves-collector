@@ -87,6 +87,7 @@ module.exports = {
                     .catch(err => logger.error(`${SRC} Failed to upload ${id}`, err.message));
                 }
               });
+
               return {
                 id,
                 title: attributes.name,
