@@ -63,7 +63,8 @@ module.exports = {
       Promise.all(requestList)
         .then(resp => {
           resp.forEach(async r => {
-            var formatedGamesList = r.data.results[0].hits.map(e => {
+            const rundate = Date.now();
+            var formatedGamesList = r.data.results[0].hits.map((e, i) => {
               const {
                 nsuid,
                 title,
@@ -91,7 +92,7 @@ module.exports = {
               //   }
               // });
               return {
-                id: nsuid,
+                id: `${nsuid}-${rundate + i}`,
                 title,
                 platform,
                 thumbnail_url,
@@ -111,7 +112,7 @@ module.exports = {
               logger.info(`${SRC} Inserting ${formatedGamesList.length}`);
               await db.insertList(formatedGamesList);
             } catch (error) {
-              logger.error('1 ' + error);
+              logger.error('Nintendo 1 ' + error);
             }
           });
         })
