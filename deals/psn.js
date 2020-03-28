@@ -33,12 +33,18 @@ module.exports = {
     const updated = new Date();
     var saleCount = 0;
     try {
-      await db.deleteBySource(SRC);
       var firstResp = await instance.get(
         '/en/US/19/container/STORE-MSF77008-ALLDEALS?size=30&bucket=games&start=0'
       );
 
       saleCount = firstResp.data.data.attributes['total-results'];
+
+      var sourceCounts = await db.countBySource(SRC);
+      let filteredCount = sourceCounts.find(srcCnt => srcCnt.source === SRC);
+      if (!!filteredCount && filteredCount.count == saleCount) return;
+
+      await db.deleteBySource(SRC);
+
       var currentIndex = 0;
       const groupSize = 30;
       var requestList = [];

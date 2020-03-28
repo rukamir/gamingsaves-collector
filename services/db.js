@@ -47,6 +47,13 @@ module.exports = {
   selectAllDeals: () => {
     return knex.select().from('deals');
   },
+  countBySource: () => {
+    return knex('deals')
+      .select('source')
+      .count('source as count')
+      .groupBy('source')
+      .orderBy('source');
+  },
   insertList: list => {
     const formated = list.map(convertToDBEntry);
     return knex('deals').insert(formated);

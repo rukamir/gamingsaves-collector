@@ -39,10 +39,19 @@ module.exports = {
   retrieveData: async () => {
     logger.info('Starting Nintendo retrieval');
     const updated = new Date();
-    await db.deleteBySource(SRC);
+
     try {
       const resp = await instance.post('', createNintendoQueryBody(0, 30));
       const salesCount = resp.data.results[1].facets.generalFilters.Deals;
+
+      var sourceCounts = await db.countBySource(SRC);
+      logger.info({ sourceCounts });
+      let filteredCount = sourceCounts.find(srcCnt => srcCnt.source === SRC);
+      logger.info({ filteredCount, salesCount, SRC });
+      if (!!filteredCount && filteredCount.count == salesCount) return;
+
+      await db.deleteBySource(SRC);
+
       var currentIndex = 0;
       const groupSize = 42;
       var requestList = [];
@@ -70,17 +79,17 @@ module.exports = {
               } = e;
               const thumbnail_url = `https://nintendo.com${boxArt}`;
               // insert to s3
-              s3.CheckForExistingKey(BUCKET_NAME, nsuid, (error, data) => {
-                if (error) {
-                  logger.info(`${SRC} Creating new object ${nsuid}`);
-                  axios
-                    .get(thumbnail_url, {
-                      responseType: 'stream'
-                    })
-                    .then(resp => resp.data.pipe(s3.uploadFromStream(BUCKET_NAME, nsuid)))
-                    .catch(err => logger.error(`${SRC} Failed to upload ${nsuid}`, err.message));
-                }
-              });
+              // s3.CheckForExistingKey(BUCKET_NAME, nsuid, (error, data) => {
+              //   if (error) {
+              //     logger.info(`${SRC} Creating new object ${nsuid}`);
+              //     axios
+              //       .get(thumbnail_url, {
+              //         responseType: 'stream'
+              //       })
+              //       .then(resp => resp.data.pipe(s3.uploadFromStream(BUCKET_NAME, nsuid)))
+              //       .catch(err => logger.error(`${SRC} Failed to upload ${nsuid}`, err.message));
+              //   }
+              // });
               return {
                 id: nsuid,
                 title,
