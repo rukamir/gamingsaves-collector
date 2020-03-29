@@ -2,6 +2,7 @@ const db = require('../services/db');
 const s3 = require('../services/s3');
 
 module.exports = {
+  getMetacriticData: (axios, title, platform) => {},
   handleThumbnail: (axios, bucket, key, SRC, thumbnailURL, logger) => {
     db.isThumbnailSaved(key, SRC)
       .then(found => {
@@ -19,7 +20,7 @@ module.exports = {
           } else {
             db.insertThumbnailMetadata(key, SRC)
               .then(() => logger.info(`${SRC} ID ${key} not in DB but found in S3. Added to DB.`))
-              .catch(err => logger.warn(`${SRC} Error updating DB after already in S3. `, err));
+              .catch(err => logger.warn(`${SRC} Error updating DB after already in S3. ${key}`));
           }
         });
       })

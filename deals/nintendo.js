@@ -86,7 +86,7 @@ module.exports = {
 
               return {
                 id: `${nsuid}-${rundate + i}`,
-                title,
+                title: title.replace(/[^\x00-\xFF]/g, ''),
                 platform,
                 thumbnail_url,
                 thumbnail_key: `${nsuid}`,
@@ -94,7 +94,7 @@ module.exports = {
                 msrp,
                 list: salePrice,
                 source: SRC,
-                description,
+                description: description.replace(/[^\x00-\xFF]/g, ''),
                 updated,
                 release: new Date(releaseDateMask),
                 rating: esrb,

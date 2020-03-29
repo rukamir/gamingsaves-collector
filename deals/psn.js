@@ -91,7 +91,7 @@ module.exports = {
 
               return {
                 id,
-                title: attributes.name,
+                title: attributes.name.replace(/[^\x00-\xFF]/g, ''),
                 platform: attributes.platforms[0],
                 thumbnail_url: thumbnailURL,
                 thumbnail_key: `${id}`,
@@ -100,7 +100,7 @@ module.exports = {
                 memberPrice,
                 url: `https://store.playstation.com/en-us/product/${id}`,
                 source: SRC,
-                description,
+                description: description.replace(/[^\x00-\xFF]/g, ''),
                 rating,
                 release: new Date(release),
                 updated
