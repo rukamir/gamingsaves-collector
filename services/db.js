@@ -47,6 +47,22 @@ module.exports = {
   selectAllDeals: () => {
     return knex.select().from('deals');
   },
+  isThumbnailSaved: async (id, source) => {
+    let found = false;
+    try {
+      const foundResults = await knex.raw(
+        'SELECT EXISTS(SELECT * FROM thumbnail WHERE `id` = ? AND `source` = ?) AS `exists`',
+        [id, source]
+      );
+      found = !!foundResults[0][0].exists;
+    } catch (err) {
+      console.log(err);
+    }
+    return found;
+  },
+  insertThumbnailMetadata: (key, src) => {
+    return knex('thumbnail').insert({ id: key, source: src });
+  },
   countBySource: () => {
     return knex('deals')
       .select('source')

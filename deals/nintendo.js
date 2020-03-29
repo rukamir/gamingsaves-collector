@@ -2,6 +2,7 @@ const logger = require('pino')();
 const axios = require('axios');
 const db = require('../services/db');
 const s3 = require('../services/s3');
+const { handleThumbnail } = require('../services/support');
 
 const instance = axios.create({
   baseURL:
@@ -45,10 +46,11 @@ module.exports = {
       const salesCount = resp.data.results[1].facets.generalFilters.Deals;
 
       var sourceCounts = await db.countBySource(SRC);
-      logger.info({ sourceCounts });
       let filteredCount = sourceCounts.find(srcCnt => srcCnt.source === SRC);
-      logger.info({ filteredCount, salesCount, SRC });
-      if (!!filteredCount && filteredCount.count == salesCount) return;
+      if (!!filteredCount && filteredCount.count == salesCount) {
+        logger.info(`${SRC} number of deals did not change. Skipping update.`);
+        return;
+      }
 
       await db.deleteBySource(SRC);
 
@@ -79,18 +81,9 @@ module.exports = {
                 categories
               } = e;
               const thumbnail_url = `https://nintendo.com${boxArt}`;
-              // insert to s3
-              // s3.CheckForExistingKey(BUCKET_NAME, nsuid, (error, data) => {
-              //   if (error) {
-              //     logger.info(`${SRC} Creating new object ${nsuid}`);
-              //     axios
-              //       .get(thumbnail_url, {
-              //         responseType: 'stream'
-              //       })
-              //       .then(resp => resp.data.pipe(s3.uploadFromStream(BUCKET_NAME, nsuid)))
-              //       .catch(err => logger.error(`${SRC} Failed to upload ${nsuid}`, err.message));
-              //   }
-              // });
+
+              handleThumbnail(axios, BUCKET_NAME, nsuid, SRC, thumbnail_url, logger);
+
               return {
                 id: `${nsuid}-${rundate + i}`,
                 title,
@@ -112,15 +105,15 @@ module.exports = {
               logger.info(`${SRC} Inserting ${formatedGamesList.length}`);
               await db.insertList(formatedGamesList);
             } catch (error) {
-              logger.error('Nintendo 1 ' + error);
+              logger.error(`${SRC} 1`, error);
             }
           });
         })
         .catch(error => {
-          logger.error('2 ' + error);
+          logger.error(`${SRC} 2`, error);
         });
     } catch (error) {
-      logger.error('3 ' + error);
+      logger.error(`${SRC} 3`, error);
     }
   }
 };

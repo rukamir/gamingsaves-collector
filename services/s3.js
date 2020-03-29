@@ -6,13 +6,15 @@ const {
   AWS_ACCESS_KEY_ID,
   AWS_SECRET_ACCESS_KEY,
   OBJ_STORAGE_ADDR,
-  OBJ_STORAGE_PORT
+  OBJ_STORAGE_PORT,
+  NODE_ENV
 } = process.env;
 logger.info(OBJ_STORAGE_ADDR);
 const s3 = new S3({
   accessKeyId: AWS_ACCESS_KEY_ID,
   secretAccessKey: AWS_SECRET_ACCESS_KEY,
-  endpoint: `${OBJ_STORAGE_ADDR}`,
+  endpoint:
+    NODE_ENV === 'production' ? `${OBJ_STORAGE_ADDR}` : `${OBJ_STORAGE_ADDR}:${OBJ_STORAGE_PORT}`,
   apiVersion: '2006-03-01',
   sslEnabled: true,
   s3ForcePathStyle: true,

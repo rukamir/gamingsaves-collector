@@ -2,6 +2,8 @@ const logger = require('pino')();
 const axios = require('axios');
 const db = require('../services/db');
 const s3 = require('../services/s3');
+const { handleThumbnail } = require('../services/support');
+
 // axios.interceptors.request.use(request => {
 //   logger.info('Starting Request', request);
 //   return request;
@@ -41,7 +43,10 @@ module.exports = {
 
       var sourceCounts = await db.countBySource(SRC);
       let filteredCount = sourceCounts.find(srcCnt => srcCnt.source === SRC);
-      if (!!filteredCount && filteredCount.count == saleCount) return;
+      if (!!filteredCount && filteredCount.count == saleCount) {
+        logger.info(`${SRC} number of deals did not change. Skipping update.`);
+        return;
+      }
 
       await db.deleteBySource(SRC);
 
@@ -81,18 +86,8 @@ module.exports = {
               const memberPrice = parseFloat(
                 attributes.skus[0].prices['plus-user']['actual-price'].display.split('$')[1]
               );
-              // add thumbnail to s3
-              s3.CheckForExistingKey(BUCKET_NAME, id, (error, data) => {
-                if (error) {
-                  logger.info(`${SRC} Creating new object ${id}`);
-                  axios
-                    .get(thumbnailURL, {
-                      responseType: 'stream'
-                    })
-                    .then(resp => resp.data.pipe(s3.uploadFromStream(BUCKET_NAME, id)))
-                    .catch(err => logger.error(`${SRC} Failed to upload ${id}`, err.message));
-                }
-              });
+
+              handleThumbnail(axios, BUCKET_NAME, id, SRC, thumbnailURL, logger);
 
               return {
                 id,
@@ -114,9 +109,9 @@ module.exports = {
             // insert into db
             try {
               logger.info(`${SRC} Inserting ${gameList.length}`);
-              var dbres = await db.insertList(gameList);
+              await db.insertList(gameList);
             } catch (error) {
-              logger.error(error.message);
+              logger.error(`${SRC} 1` + error);
             }
           });
         })

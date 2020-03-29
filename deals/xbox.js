@@ -2,6 +2,7 @@ const logger = require('pino')();
 const axios = require('axios');
 const db = require('../services/db');
 const s3 = require('../services/s3');
+const { handleThumbnail } = require('../services/support');
 const _get = require('lodash/get');
 
 const SRC = 'xbox';
@@ -80,24 +81,11 @@ module.exports = {
                   .toLowerCase()
                   .replace(/[ ]/g, '-');
 
-                // s3 operations
-                s3.CheckForExistingKey(BUCKET_NAME, ProductId, (error, data) => {
-                  if (error) {
-                    logger.info(`${SRC} Creating new object ${ProductId}`);
-                    axios
-                      .get(thumbnail_url, {
-                        responseType: 'stream'
-                      })
-                      .then(resp => resp.data.pipe(s3.uploadFromStream(BUCKET_NAME, ProductId)))
-                      .catch(err =>
-                        logger.error(`${SRC} Failed to upload ${ProductId}`, err.message)
-                      );
-                  }
-                });
+                handleThumbnail(axios, BUCKET_NAME, ProductId, SRC, thumbnail_url, logger);
 
                 filtered.push({
                   id: ProductId,
-                  title: ProductTitle,
+                  title: ProductTitle.replace(/[^\x00-\xFF]/g, ''),
                   platform: 'Xbox One',
                   list: ListPrice,
                   msrp: MSRP,
@@ -106,7 +94,7 @@ module.exports = {
                   thumbnail_key: `${ProductId}`,
                   release: new Date(OriginalReleaseDate),
                   rating,
-                  description: ShortDescription,
+                  description: ShortDescription.replace(/[^\x00-\xFF]/g, ''),
                   source: SRC,
                   updated
                 });
