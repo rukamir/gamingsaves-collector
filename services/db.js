@@ -63,6 +63,28 @@ module.exports = {
   insertThumbnailMetadata: (key, src) => {
     return knex('thumbnail').insert({ id: key, source: src });
   },
+  isMetacriticSaved: async (title, platform, score) => {
+    let found = false;
+    try {
+      const foundResults = await knex.raw(
+        'SELECT EXISTS(SELECT * FROM metacritic WHERE `title` = ? AND `platform` = ?) AS `exists`',
+        [title, platform]
+      );
+      found = !!foundResults[0][0].exists;
+    } catch (err) {
+      console.log(err);
+    }
+    return found;
+  },
+  insertMetacritic: (title, platform, score) => {
+    return knex('metacritic').insert({ title, platform, score });
+  },
+  getListOfMissingMetacritic: limit => {
+    return knex.raw(
+      'SELECT a.`title`, a.`platform` FROM game.deals a NATURAL LEFT JOIN game.metacritic b WHERE b.`title` IS NULL LIMIT ?',
+      [limit]
+    );
+  },
   countBySource: () => {
     return knex('deals')
       .select('source')

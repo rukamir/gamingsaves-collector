@@ -81,12 +81,13 @@ module.exports = {
                 categories
               } = e;
               const thumbnail_url = `https://nintendo.com${boxArt}`;
+              const cleanedTitle = title.replace(/[^\x00-\xFF]/g, '');
 
               handleThumbnail(axios, BUCKET_NAME, nsuid, SRC, thumbnail_url, logger);
 
               return {
                 id: `${nsuid}-${rundate + i}`,
-                title: title.replace(/[^\x00-\xFF]/g, ''),
+                title: cleanedTitle,
                 platform,
                 thumbnail_url,
                 thumbnail_key: `${nsuid}`,
