@@ -1,3 +1,4 @@
+const logger = require('pino')();
 const knex = require('knex')({
   client: 'mysql',
   connection: {
@@ -43,6 +44,50 @@ const convertToDBEntry = item => {
   };
 };
 
+const convertToGameEntry = item => {
+  return {
+    id: item.id,
+    title: item.title,
+    platform: item.platform,
+    msrp: item.msrp,
+    url: item.url,
+    thumbnail_url: item.thumbnail_url,
+    src: item.source,
+    desc: item.description,
+    release: item.release,
+    rating: item.rating
+  };
+};
+
+const convertToPriceHistEntry = item => {
+  return {
+    id: item.id,
+    list: item.list,
+    src: item.source,
+    date: item.date
+  };
+};
+
+const convertToDealEntry = item => {
+  const costRatio = item.list / item.msrp;
+  return {
+    id: item.id,
+    list: item.list,
+    discount: Math.floor(100 - 100 * costRatio),
+    src: item.source,
+    date: item.date
+  };
+};
+
+const insertIgnore = (table, data) => {
+  return knex.raw(
+    knex(table)
+      .insert(data)
+      .toString()
+      .replace(/^insert/i, 'insert ignore')
+  );
+};
+
 module.exports = {
   selectAllDeals: () => {
     return knex.select().from('deals');
@@ -51,7 +96,7 @@ module.exports = {
     let found = false;
     try {
       const foundResults = await knex.raw(
-        'SELECT EXISTS(SELECT * FROM thumbnail WHERE `id` = ? AND `source` = ?) AS `exists`',
+        'SELECT EXISTS(SELECT * FROM thumbnail WHERE `key` = ? AND `src` = ?) AS `exists`',
         [id, source]
       );
       found = !!foundResults[0][0].exists;
@@ -61,7 +106,7 @@ module.exports = {
     return found;
   },
   insertThumbnailMetadata: (key, src) => {
-    return knex('thumbnail').insert({ id: key, source: src });
+    return knex('thumbnail').insert({ key, src });
   },
   isMetacriticSaved: async (title, platform, score) => {
     let found = false;
@@ -91,6 +136,36 @@ module.exports = {
       .count('source as count')
       .groupBy('source')
       .orderBy('source');
+  },
+  addGenres: (title, genres) => {
+    // const genreList = genres.reduce((accum, genre) => {
+    //   accum.push(title);
+    //   accum.push(genre.toLowerCase());
+    //   return accum;
+    // }, []);
+
+    // knex
+    //   .raw(`INSERT IGNORE INTO genre VALUES ${genres.map(_ => '( ?, ? )').join(',')}`, genreList)
+    const genreList = genres.map(e => ({ title, genre: e }));
+    insertIgnore('genre', genreList).catch(e => logger.error('Error adding genres', e.message));
+  },
+  addGamesToDB: list => {
+    logger.info('Adding games to DB', list[0]);
+    const gameList = list.map(convertToGameEntry);
+    knex('game')
+      .insert(gameList)
+      .catch(err => logger.error('Could not insert game', err.message));
+
+    const dealList = list.map(convertToDealEntry);
+    knex('deal')
+      .insert(dealList)
+      .catch(err => logger.error('Could not insert deal', err.message));
+
+    const priceList = list.map(convertToPriceHistEntry);
+    knex('price_hist')
+      .insert(priceList)
+      .catch(err => logger.error('Could not insert historic price', err.message));
+    logger.info('Done adding games to DB');
   },
   insertList: list => {
     const formated = list.map(convertToDBEntry);

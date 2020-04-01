@@ -65,10 +65,9 @@ module.exports = {
       Promise.all(requestList)
         .then(resp => {
           resp.forEach(async r => {
-            const rundate = Date.now();
             var formatedGamesList = r.data.results[0].hits.map((e, i) => {
               const {
-                nsuid,
+                objectID,
                 title,
                 platform = 'unavailable',
                 boxArt,
@@ -83,30 +82,33 @@ module.exports = {
               const thumbnail_url = `https://nintendo.com${boxArt}`;
               const cleanedTitle = title.replace(/[^\x00-\xFF]/g, '');
 
-              handleThumbnail(axios, BUCKET_NAME, nsuid, SRC, thumbnail_url, logger);
+              handleThumbnail(axios, BUCKET_NAME, objectID, SRC, thumbnail_url, logger);
+              db.addGenres(cleanedTitle, categories);
 
               return {
-                id: `${nsuid}-${rundate + i}`,
+                id: objectID,
                 title: cleanedTitle,
                 platform,
                 thumbnail_url,
-                thumbnail_key: `${nsuid}`,
+                thumbnail_key: `${objectID}`,
                 url: `https://nintendo.com${url}`,
                 msrp,
                 list: salePrice,
                 source: SRC,
                 description: description.replace(/[^\x00-\xFF]/g, ''),
                 updated,
+                date: updated,
                 release: new Date(releaseDateMask),
                 rating: esrb,
-                genre: categories
+                genres: categories
               };
             });
             try {
               logger.info(`${SRC} Inserting ${formatedGamesList.length}`);
               await db.insertList(formatedGamesList);
-            } catch (error) {
-              logger.error(`${SRC} 1`, error);
+              db.addGamesToDB(formatedGamesList);
+            } catch (err) {
+              logger.error(`${SRC} 1`, err.message);
             }
           });
         })

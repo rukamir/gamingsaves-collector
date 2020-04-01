@@ -103,7 +103,8 @@ module.exports = {
                 description: description.replace(/[^\x00-\xFF]/g, ''),
                 rating,
                 release: new Date(release),
-                updated
+                updated,
+                genres
               };
             });
             // insert into db
