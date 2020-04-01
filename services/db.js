@@ -55,7 +55,9 @@ const convertToGameEntry = item => {
     src: item.source,
     desc: item.description,
     release: item.release,
-    rating: item.rating
+    rating: item.rating,
+    pub: publisher,
+    dev: developer
   };
 };
 
@@ -138,19 +140,10 @@ module.exports = {
       .orderBy('source');
   },
   addGenres: (title, genres) => {
-    // const genreList = genres.reduce((accum, genre) => {
-    //   accum.push(title);
-    //   accum.push(genre.toLowerCase());
-    //   return accum;
-    // }, []);
-
-    // knex
-    //   .raw(`INSERT IGNORE INTO genre VALUES ${genres.map(_ => '( ?, ? )').join(',')}`, genreList)
     const genreList = genres.map(e => ({ title, genre: e }));
     insertIgnore('genre', genreList).catch(e => logger.error('Error adding genres', e.message));
   },
   addGamesToDB: list => {
-    logger.info('Adding games to DB', list[0]);
     const gameList = list.map(convertToGameEntry);
     knex('game')
       .insert(gameList)

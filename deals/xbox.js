@@ -68,7 +68,13 @@ module.exports = {
                   MSRP
                 } = game.DisplaySkuAvailabilities[0].Availabilities[0].OrderManagementData.Price;
                 const title = game.LocalizedProperties[0].ProductTitle;
-                const { ProductTitle, Images, ShortDescription } = game.LocalizedProperties[0];
+                const {
+                  ProductTitle,
+                  Images,
+                  ShortDescription,
+                  DeveloperName,
+                  PublisherName
+                } = game.LocalizedProperties[0];
                 const { OriginalReleaseDate, ContentRatings } = game.MarketProperties[0];
                 const rating = ContentRatings.find(rating => rating.RatingSystem == 'ESRB')
                   .RatingId.split(':')
@@ -96,7 +102,9 @@ module.exports = {
                   rating,
                   description: ShortDescription.replace(/[^\x00-\xFF]/g, ''),
                   source: SRC,
-                  updated
+                  updated,
+                  developer: DeveloperName,
+                  publisher: PublisherName
                 });
               }
               return filtered;

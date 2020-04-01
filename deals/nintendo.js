@@ -77,7 +77,9 @@ module.exports = {
                 description,
                 releaseDateMask,
                 esrb,
-                categories
+                categories,
+                publishers,
+                developers
               } = e;
               const thumbnail_url = `https://nintendo.com${boxArt}`;
               const cleanedTitle = title.replace(/[^\x00-\xFF]/g, '');
@@ -100,7 +102,9 @@ module.exports = {
                 date: updated,
                 release: new Date(releaseDateMask),
                 rating: esrb,
-                genres: categories
+                genres: categories,
+                publisher: publishers[0],
+                developer: developers[0]
               };
             });
             try {

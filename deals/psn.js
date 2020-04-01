@@ -76,6 +76,7 @@ module.exports = {
               const genres = attributes.genres;
               const release = attributes['release-date'];
               const description = attributes['long-description'];
+              const publisher = attributes['provider-name'];
               const rating = getRating(attributes['content-rating'].url);
               const msrp = parseFloat(
                 attributes.skus[0].prices['plus-user']['strikethrough-price'].display.split('$')[1]
@@ -104,7 +105,8 @@ module.exports = {
                 rating,
                 release: new Date(release),
                 updated,
-                genres
+                genres,
+                publisher
               };
             });
             // insert into db
