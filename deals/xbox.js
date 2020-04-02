@@ -62,7 +62,7 @@ module.exports = {
               );
 
               if (ListPrice < MSRP) {
-                const { ProductId } = game;
+                const { ProductId, LastModifiedDate } = game;
                 const {
                   ListPrice,
                   MSRP
@@ -103,6 +103,7 @@ module.exports = {
                   description: ShortDescription.replace(/[^\x00-\xFF]/g, ''),
                   source: SRC,
                   updated,
+                  date: updated,
                   developer: DeveloperName,
                   publisher: PublisherName
                 });
@@ -111,12 +112,8 @@ module.exports = {
             }, []);
 
             if (gameData.length) {
-              try {
-                logger.info(`${SRC} Inserting ${gameData.length}`);
-                await db.insertList(gameData);
-              } catch (error) {
-                logger.error(error.message, error.stack);
-              }
+              logger.info(`${SRC} Inserting ${gameData.length}`);
+              db.addGamesToDB(gameData);
             }
           });
         })

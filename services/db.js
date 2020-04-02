@@ -170,7 +170,11 @@ module.exports = {
   },
   addGamesToDB: list => {
     const gameList = list.map(convertToGameEntry);
-    insertIgnore('game', gameList).catch(err => logger.error('Could not insert game', err.message));
+    const q1 =
+      knex('game')
+        .insert(gameList)
+        .toString() + ' ON DUPLICATE KEY UPDATE `msrp` = VALUES(`msrp`), `desc` = VALUES(`desc`)';
+    knex.raw(q1).catch(err => logger.error('Could not insert game', err.message));
 
     const dealList = list.map(convertToDealEntry);
     knex('deal')
@@ -178,11 +182,11 @@ module.exports = {
       .catch(err => logger.error('Could not insert deal', err.message));
 
     const priceList = list.map(convertToPriceHistEntry);
-    const q =
+    const q2 =
       knex('price_hist')
         .insert(priceList)
         .toString() + ' ON DUPLICATE KEY UPDATE `list` = VALUES(`list`)';
-    knex.raw(q).catch(err => logger.error('Could not insert Price History', err.message));
+    knex.raw(q2).catch(err => logger.error('Could not insert Price History', err.message));
   },
   insertList: list => {
     const formated = list.map(convertToDBEntry);
