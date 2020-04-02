@@ -46,13 +46,18 @@ module.exports = {
       const salesCount = resp.data.results[1].facets.generalFilters.Deals;
 
       var sourceCounts = await db.countBySource(SRC);
-      let filteredCount = sourceCounts.find(srcCnt => srcCnt.source === SRC);
+      let filteredCount = sourceCounts.find(srcCnt => srcCnt.src === SRC);
       if (!!filteredCount && filteredCount.count == salesCount) {
         logger.info(`${SRC} number of deals did not change. Skipping update.`);
         return;
       }
 
+      // get last update date
+      // set price history with last update date to today and msrp
+      db.createPriceHistSetToMSRPBySource(SRC);
+      // delete deals by source
       await db.deleteBySource(SRC);
+      // update new price INSERT IGNORE with todays date to get most ucrrent price
 
       var currentIndex = 0;
       const groupSize = 42;
@@ -78,11 +83,13 @@ module.exports = {
                 releaseDateMask,
                 esrb,
                 categories,
-                publishers,
-                developers
+                publishers = null,
+                developers = null
               } = e;
               const thumbnail_url = `https://nintendo.com${boxArt}`;
               const cleanedTitle = title.replace(/[^\x00-\xFF]/g, '');
+              const publisher = !!publishers ? publishers[0] : null;
+              const developer = !!developers ? developers[0] : null;
 
               handleThumbnail(axios, BUCKET_NAME, objectID, SRC, thumbnail_url, logger);
               db.addGenres(cleanedTitle, categories);
@@ -103,24 +110,20 @@ module.exports = {
                 release: new Date(releaseDateMask),
                 rating: esrb,
                 genres: categories,
-                publisher: publishers[0],
-                developer: developers[0]
+                publisher,
+                developer
               };
             });
-            try {
-              logger.info(`${SRC} Inserting ${formatedGamesList.length}`);
-              await db.insertList(formatedGamesList);
-              db.addGamesToDB(formatedGamesList);
-            } catch (err) {
-              logger.error(`${SRC} 1`, err.message);
-            }
+
+            logger.info(`${SRC} Inserting ${formatedGamesList.length}`);
+            db.addGamesToDB(formatedGamesList);
           });
         })
         .catch(error => {
-          logger.error(`${SRC} 2`, error);
+          logger.error(`${SRC} 2`, error.message);
         });
     } catch (error) {
-      logger.error(`${SRC} 3`, error);
+      logger.error(`${SRC} 3`, error.message);
     }
   }
 };

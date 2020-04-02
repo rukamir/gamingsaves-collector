@@ -36,7 +36,7 @@ const convertToDBEntry = item => {
     url: item.url,
     thumbnail_url: item.thumbnail_url,
     thumbnail_key: item.thumbnail_key,
-    source: item.source,
+    src: item.source,
     desc: item.description,
     release: item.release,
     rating: item.rating,
@@ -56,8 +56,8 @@ const convertToGameEntry = item => {
     desc: item.description,
     release: item.release,
     rating: item.rating,
-    pub: publisher,
-    dev: developer
+    pub: item.publisher,
+    dev: item.developer
   };
 };
 
@@ -92,7 +92,7 @@ const insertIgnore = (table, data) => {
 
 module.exports = {
   selectAllDeals: () => {
-    return knex.select().from('deals');
+    return knex.select().from('deal');
   },
   isThumbnailSaved: async (id, source) => {
     let found = false;
@@ -128,16 +128,41 @@ module.exports = {
   },
   getListOfMissingMetacritic: limit => {
     return knex.raw(
-      'SELECT a.`title`, a.`platform` FROM game.deals a NATURAL LEFT JOIN game.metacritic b WHERE b.`title` IS NULL LIMIT ?',
+      'SELECT a.`title`, a.`platform` FROM game.deal a NATURAL LEFT JOIN game.metacritic b WHERE b.`title` IS NULL LIMIT ?',
       [limit]
     );
   },
   countBySource: () => {
-    return knex('deals')
-      .select('source')
-      .count('source as count')
-      .groupBy('source')
-      .orderBy('source');
+    return knex('deal')
+      .select('src')
+      .count('src as count')
+      .groupBy('src')
+      .orderBy('src');
+  },
+  getLastUpdateBySource: async src => {
+    try {
+      const date = await knex('deal')
+        .select('date')
+        .where({ src })
+        .orderBy('date', 'desc')
+        .limit(1);
+
+      return date.length ? date[0].date : null;
+    } catch (e) {
+      logger.error('Unable to get Last Update By Source', e.message);
+      return null;
+    }
+  },
+  createPriceHistSetToMSRPBySource: async src => {
+    knex
+      .raw(
+        'INSERT IGNORE INTO game.price_hist ' +
+          '(SELECT `id` AS link, ' +
+          "DATE('2021-05-04'), " +
+          "(SELECT `msrp` FROM game.game WHERE `id` = link AND `src` = 'nintendo'), `src` FROM game.price_hist WHERE `src` = 'nintendo' AND `date` = " +
+          "(SELECT `date` FROM game.price_hist WHERE `src` = 'nintendo' ORDER BY `date` DESC LIMIT 1))"
+      )
+      .catch(err => logger.error('Unable to create MSRP Pirce Histort', err.message));
   },
   addGenres: (title, genres) => {
     const genreList = genres.map(e => ({ title, genre: e }));
@@ -145,9 +170,7 @@ module.exports = {
   },
   addGamesToDB: list => {
     const gameList = list.map(convertToGameEntry);
-    knex('game')
-      .insert(gameList)
-      .catch(err => logger.error('Could not insert game', err.message));
+    insertIgnore('game', gameList).catch(err => logger.error('Could not insert game', err.message));
 
     const dealList = list.map(convertToDealEntry);
     knex('deal')
@@ -155,18 +178,19 @@ module.exports = {
       .catch(err => logger.error('Could not insert deal', err.message));
 
     const priceList = list.map(convertToPriceHistEntry);
-    knex('price_hist')
-      .insert(priceList)
-      .catch(err => logger.error('Could not insert historic price', err.message));
-    logger.info('Done adding games to DB');
+    const q =
+      knex('price_hist')
+        .insert(priceList)
+        .toString() + ' ON DUPLICATE KEY UPDATE `list` = VALUES(`list`)';
+    knex.raw(q).catch(err => logger.error('Could not insert Price History', err.message));
   },
   insertList: list => {
     const formated = list.map(convertToDBEntry);
     return knex('deals').insert(formated);
   },
   deleteBySource: src => {
-    return knex('deals')
-      .where('source', src)
+    return knex('deal')
+      .where('src', src)
       .delete();
   }
 };
