@@ -42,7 +42,7 @@ module.exports = {
       saleCount = firstResp.data.data.attributes['total-results'];
 
       var sourceCounts = await db.countBySource(SRC);
-      let filteredCount = sourceCounts.find(srcCnt => srcCnt.source === SRC);
+      let filteredCount = sourceCounts.find(srcCnt => srcCnt.src === SRC);
       if (!!filteredCount && filteredCount.count == saleCount) {
         logger.info(`${SRC} number of deals did not change. Skipping update.`);
         return;
@@ -72,6 +72,7 @@ module.exports = {
             );
             var gameList = gamesContentTypeOne.map(e => {
               const { id, attributes } = e;
+              const title = attributes.name.replace(/[^\x00-\xFF]/g, '');
               const thumbnailURL = attributes['thumbnail-url-base'];
               const genres = attributes.genres;
               const release = attributes['release-date'];
@@ -89,10 +90,11 @@ module.exports = {
               );
 
               handleThumbnail(axios, BUCKET_NAME, id, SRC, thumbnailURL, logger);
+              db.addGenres(title, genres);
 
               return {
                 id,
-                title: attributes.name.replace(/[^\x00-\xFF]/g, ''),
+                title,
                 platform: attributes.platforms[0],
                 thumbnail_url: thumbnailURL,
                 thumbnail_key: `${id}`,
@@ -105,17 +107,13 @@ module.exports = {
                 rating,
                 release: new Date(release),
                 updated,
+                date: updated,
                 genres,
                 publisher
               };
             });
             // insert into db
-            try {
-              logger.info(`${SRC} Inserting ${gameList.length}`);
-              await db.insertList(gameList);
-            } catch (error) {
-              logger.error(`${SRC} 1` + error);
-            }
+            db.addGamesToDB(gameList);
           });
         })
         .catch(err => {
