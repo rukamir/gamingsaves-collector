@@ -52,12 +52,10 @@ module.exports = {
         return;
       }
 
-      // get last update date
       // set price history with last update date to today and msrp
       db.createPriceHistSetToMSRPBySource(SRC);
       // delete deals by source
       await db.deleteBySource(SRC);
-      // update new price INSERT IGNORE with todays date to get most ucrrent price
 
       var currentIndex = 0;
       const groupSize = 42;

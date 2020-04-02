@@ -128,7 +128,7 @@ module.exports = {
   },
   getListOfMissingMetacritic: limit => {
     return knex.raw(
-      'SELECT a.`title`, a.`platform` FROM game.deal a NATURAL LEFT JOIN game.metacritic b WHERE b.`title` IS NULL LIMIT ?',
+      'SELECT a.`title`, a.`platform` FROM game.game a NATURAL LEFT JOIN game.metacritic b WHERE b.`title` IS NULL LIMIT ?',
       [limit]
     );
   },
