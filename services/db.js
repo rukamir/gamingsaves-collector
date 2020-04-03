@@ -154,13 +154,15 @@ module.exports = {
     }
   },
   createPriceHistSetToMSRPBySource: async src => {
+    const date = new Date();
     knex
       .raw(
         'INSERT IGNORE INTO game.price_hist ' +
           '(SELECT `id` AS link, ' +
-          "DATE('2021-05-04'), " +
-          "(SELECT `msrp` FROM game.game WHERE `id` = link AND `src` = 'nintendo'), `src` FROM game.price_hist WHERE `src` = 'nintendo' AND `date` = " +
-          "(SELECT `date` FROM game.price_hist WHERE `src` = 'nintendo' ORDER BY `date` DESC LIMIT 1))"
+          'DATE(?), ' +
+          "(SELECT `msrp` FROM game.game WHERE `id` = link AND `src` = ?), `src` FROM game.price_hist WHERE `src` = 'nintendo' AND `date` = " +
+          "(SELECT `date` FROM game.price_hist WHERE `src` = 'nintendo' ORDER BY `date` DESC LIMIT 1))",
+        [date, src]
       )
       .catch(err => logger.error('Unable to create MSRP Pirce Histort', err.message));
   },

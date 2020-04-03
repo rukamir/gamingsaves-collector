@@ -48,14 +48,21 @@ const getAndSaveMetacritic = (title, platform) => {
         .then(() => logger.info('MetaCritic Score added', title, platformMC, mcscore))
         .catch(err => logger.info('MetaCoopApi DB call failed', err.message));
     })
-    .catch(err => logger.warn('MetaCoopApi Failure', err.message));
+    .catch(err => {
+      if ((err.status = 404)) {
+        db.insertMetacritic(title, platform, 0).catch(e =>
+          logger.error('MetaCoopApi unable to insert', e.message)
+        );
+        logger.warn('MetaCoopApi Failure Not found', title, platform);
+      } else logger.warn('MetaCoopApi Failure', err.message);
+    });
 };
 
 module.exports = {
   lookForMissingMetaCriticScores: () => {
     logger.info('Looking for missing MetaCritic Scores');
     var requestList = [];
-    db.getListOfMissingMetacritic(2)
+    db.getListOfMissingMetacritic(5)
       .then(rows => {
         if (rows[0].length) {
           rows[0].forEach(async row => getAndSaveMetacritic(row.title, row.platform));

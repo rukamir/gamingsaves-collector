@@ -53,9 +53,6 @@ module.exports = {
       },
       (err, data) => {
         if (err) logger.error(err.message, err.stack);
-        else {
-          logger.info(`Upload successful ${data.key}`);
-        }
       }
     );
     return pass;
