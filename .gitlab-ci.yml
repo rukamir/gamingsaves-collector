@@ -32,11 +32,13 @@ compile:
 
 deploy_prod:
   stage: deploy
-  image: ubuntu:latest
+  image: debian:latest
   environment:
     name: production
   only:
     - master
+  before_script:
+    - apt install ssh
   script:
     - chmod 600 $SSH_KEY
     - mkdir -p ~/.ssh
