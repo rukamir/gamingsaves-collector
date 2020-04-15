@@ -104,8 +104,8 @@ module.exports = {
                   source: SRC,
                   updated,
                   date: updated,
-                  developer: DeveloperName,
-                  publisher: PublisherName
+                  developer: DeveloperName.replace(/[^\x00-\xFF]/g, ''),
+                  publisher: PublisherName.replace(/[^\x00-\xFF]/g, '')
                 });
               }
               return filtered;
