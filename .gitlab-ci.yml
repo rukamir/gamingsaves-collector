@@ -25,7 +25,7 @@ compile:
     - docker:dind
   script:
     - docker build -t gamingsaves-collector.docker .
-    - docker save -o gamingsaves-collector.docker .
+    - docker save -o gamingsaves-collector.docker gamingsaves-collector.docker
   artifacts:
     paths:
       - gamingsaves-collector.docker
