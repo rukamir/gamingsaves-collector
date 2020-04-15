@@ -44,5 +44,5 @@ deploy_prod:
     - mkdir -p ~/.ssh
     - '[[ -f /.dockerenv ]] && echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config'
     - ssh -i $SSH_KEY jimmy@$PROD_ADDR rm -f /home/jimmy/gamingsaves-collector.docker
-    - scp -i $SSH_KEY $CI_PROJECT_DIR/gamingsaves-ws  jimmy@$PROD_ADDR:/home/jimmy/gamingsaves-collector.docker
+    - scp -i $SSH_KEY $CI_PROJECT_DIR/gamingsaves-collector.docker jimmy@$PROD_ADDR:/home/jimmy/gamingsaves-collector.docker
     - ssh -i $SSH_KEY jimmy@$PROD_ADDR chmod +x /home/jimmy/gamingsaves-collector.docker
