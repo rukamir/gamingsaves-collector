@@ -10,15 +10,17 @@ ENV OBJ_STORAGE_PORT=443
 ENV AWS_SECRET_ACCESS_KEY=MwP2v9cmB0SaHx9nZtC3Eu3TapQbJOdEcKNwbtcE
 ENV AWS_ACCESS_KEY_ID=4EF38HELTPMHXPZ62PI0
 
-
-RUN npm i
 RUN mkdir -p /home/node/app/node_modules && chown -R node:node /home/node/app
+
+WORKDIR /home/node/app
+
+COPY package*.json ./
 
 USER node
 
-WORKDIR /home/node/app
-COPY . /home/node/app
+RUN npm install
 
+COPY --chown=node:node . .
 
 RUN npm i
 
