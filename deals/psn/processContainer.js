@@ -16,14 +16,20 @@ module.exports= async ({ lang, region, num, container, name }) => {
     // change to select on container id
     var sourceCounts = await db.countByGroup(container, region, lang, SRC);
 
+    // Check if number of games on sale for this container changed
     let filteredCount = sourceCounts.find(srcCnt => srcCnt.dealgroup === container);
     if (!!filteredCount && filteredCount.count == saleCount) {
       logger.info(`${SRC} number of deals did not change. Skipping update.`);
       return;
     }
 
-    // might not do this if we expire by timestamp
-    // await db.deleteBySource(SRC, container);
+    // The sale count have changed. Wipe out what we have and over write
+    if (!!filteredCount && filteredCount.count !== saleCount) {
+      logger.info(`${SRC} number of deals changed. Updating deals.`);
+      db.createPriceHistSetToMSRPByGroup(SRC, container, lang, region)
+      db.deleteDealsByGroup(SRC, container, lang, region)
+        .catch(e => logger.warn(`${SRC} error deleting deals`, e.message))
+    }
 
     var currentIndex = 0;
     const groupSize = 30;

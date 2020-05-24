@@ -33,7 +33,9 @@ const convertToPriceHistEntry = item => {
     id: item.id,
     list: item.list,
     src: item.source,
-    date: item.date
+    date: item.date,
+    region: item.region,
+    lang: item.lang
   };
 };
 
@@ -80,8 +82,8 @@ module.exports = {
     }
     return found;
   },
-  insertThumbnailMetadata: (key, src) => {
-    return knex('thumbnail').insert({ key, src });
+  insertThumbnailMetadata: (key, src, region, lang) => {
+    return knex('thumbnail').insert({ key, src, region, lang });
   },
   isMetacriticSaved: async (title, platform, score) => {
     let found = false;
@@ -138,37 +140,39 @@ module.exports = {
       return null;
     }
   },
-  createPriceHistSetToMSRPBySource: async src => {
-    const date = new Date();
+  createPriceHistSetToMSRPByGroup: async (src, group, lang, region) => {
     knex
       .raw(
         'INSERT IGNORE INTO game.price_hist ' +
-          '(SELECT `id` AS link, ' +
-          'DATE(?), ' +
-          "(SELECT `msrp` FROM game.game WHERE `id` = link AND `src` = ?), `src` FROM game.price_hist WHERE `src` = 'nintendo' AND `date` = " +
-          "(SELECT `date` FROM game.price_hist WHERE `src` = 'nintendo' ORDER BY `date` DESC LIMIT 1))",
-        [date, src]
+          '(SELECT ' +
+            '`id`, ' +
+            'CURDATE(), ' +
+            '(SELECT `msrp` FROM game.game WHERE `id` = t1.id AND `src` = t1.src AND `region` = t1.region AND `lang` = t1.lang), ' +
+            '`src`, ' +
+            '`region`, ' +
+            '`lang` ' +
+          'FROM game.deal as t1 ' +
+          'WHERE `src` = ? AND `group` = ? AND `lang` = ? AND `region` = ?)',
+        [src, group, lang, region]
       )
-      .catch(err => logger.error('Unable to create MSRP Pirce Histort', err.message));
+      .catch(err => logger.error('Unable to create MSRP Price History GRP', err.message));
   },
-  createPriceHistSetToMSRPAndClearExpired: async (src, group, region, lang) => {
+  createPriceHistSetToMSRPForExpired: async () => {
     const date = new Date();
     knex
       .raw(
         'INSERT IGNORE INTO game.price_hist ' +
-          '(SELECT ' + 
-            '`id` AS link, ' +
-            'DATE(?), ' +
-            "(SELECT `msrp` FROM game.game WHERE `id` = link AND `src` = ? AND `region` = ? AND `lang` = ?), " + 
-            "`src` " + 
-            "`region` " +
-            "`lang` " +
-          "FROM game.price_hist " + 
-          "WHERE `src` = ? AND `date` = " +
-            "(SELECT `date` FROM game.price_hist WHERE `src` = ? AND `id` = link AND `region` = ? AND `lang` = ? ORDER BY `date` DESC LIMIT 1) AND `region` = ? AND `lang` = ?)",
-        [date, src, region, lang, src, src, region, lang]
+          '(SELECT ' +
+            '`id`, ' +
+            'CURDATE(), ' +
+            '(SELECT `msrp` FROM game.game WHERE `id` = t1.id AND `src` = t1.src AND `region` = t1.region AND `lang` = t1.lang), ' +
+            '`src`, ' +
+            '`region`, ' +
+            '`lang` ' +
+          'FROM game.deal as t1 ' +
+          'WHERE `expire` < CURDATE())'
       )
-      .catch(err => logger.error('Unable to create MSRP Pirce Histort', err.message));
+      .catch(err => logger.error('Unable to create MSRP Price History EXP', err.message));
   },
   addGenres: (title, genres) => {
     const genreList = genres.map(e => ({ title, genre: e }));
@@ -194,9 +198,9 @@ module.exports = {
         .toString() + ' ON DUPLICATE KEY UPDATE `list` = VALUES(`list`)';
     knex.raw(q2).catch(err => logger.error('Could not insert Price History', err.message));
   },
-  deleteBySource: (src, group) => {
+  deleteDealsByGroup: (src, group, lang, region) => {
     return knex('deal')
-      .where({ src, group })
+      .where({ src, group, lang, region })
       .delete();
   }
 };
