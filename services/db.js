@@ -9,41 +9,6 @@ const knex = require('knex')({
   }
 });
 
-var DateString = myDate => {
-  return (
-    myDate.getUTCFullYear() +
-    '/' +
-    ('0' + (myDate.getUTCMonth() + 1)).slice(-2) +
-    '/' +
-    ('0' + myDate.getUTCDate()).slice(-2) +
-    ' ' +
-    ('0' + myDate.getUTCHours()).slice(-2) +
-    ':' +
-    ('0' + myDate.getUTCMinutes()).slice(-2) +
-    ':' +
-    ('0' + myDate.getUTCSeconds()).slice(-2)
-  );
-};
-const convertToDBEntry = item => {
-  const costRatio = item.list / item.msrp;
-  return {
-    id: item.id,
-    title: item.title,
-    platform: item.platform,
-    list_price: item.list,
-    msrp_price: item.msrp,
-    discount: Math.floor(100 - 100 * costRatio),
-    url: item.url,
-    thumbnail_url: item.thumbnail_url,
-    thumbnail_key: item.thumbnail_key,
-    src: item.source,
-    desc: item.description,
-    release: item.release,
-    rating: item.rating,
-    updated: DateString(item.updated)
-  };
-};
-
 const convertToGameEntry = item => {
   return {
     id: item.id,
@@ -57,7 +22,9 @@ const convertToGameEntry = item => {
     release: item.release,
     rating: item.rating,
     pub: item.publisher,
-    dev: item.developer
+    dev: item.developer,
+    region: item.region,
+    lang: item.lang
   };
 };
 
@@ -77,7 +44,13 @@ const convertToDealEntry = item => {
     list: item.list,
     discount: Math.floor(100 - 100 * costRatio),
     src: item.source,
-    date: item.date
+    date: item.date,
+    expire: item.sale_end,
+    group: item.group,
+    group_name: item.group_name,
+    expire: item.sale_end,
+    region: item.region,
+    lang: item.lang
   };
 };
 
@@ -139,6 +112,18 @@ module.exports = {
       .groupBy('src')
       .orderBy('src');
   },
+  countByGroup: (group, region, language, src) => {
+    return knex('deal')
+      .select('deal.group as dealgroup')
+      .count('* as count')
+      .where({ 
+        'deal.group': group, 
+        'deal.region': region , 
+        'deal.lang': language,
+        'deal.src': src 
+      })
+      .groupBy('group')
+  },
   getLastUpdateBySource: async src => {
     try {
       const date = await knex('deal')
@@ -166,6 +151,25 @@ module.exports = {
       )
       .catch(err => logger.error('Unable to create MSRP Pirce Histort', err.message));
   },
+  createPriceHistSetToMSRPAndClearExpired: async (src, group, region, lang) => {
+    const date = new Date();
+    knex
+      .raw(
+        'INSERT IGNORE INTO game.price_hist ' +
+          '(SELECT ' + 
+            '`id` AS link, ' +
+            'DATE(?), ' +
+            "(SELECT `msrp` FROM game.game WHERE `id` = link AND `src` = ? AND `region` = ? AND `lang` = ?), " + 
+            "`src` " + 
+            "`region` " +
+            "`lang` " +
+          "FROM game.price_hist " + 
+          "WHERE `src` = ? AND `date` = " +
+            "(SELECT `date` FROM game.price_hist WHERE `src` = ? AND `id` = link AND `region` = ? AND `lang` = ? ORDER BY `date` DESC LIMIT 1) AND `region` = ? AND `lang` = ?)",
+        [date, src, region, lang, src, src, region, lang]
+      )
+      .catch(err => logger.error('Unable to create MSRP Pirce Histort', err.message));
+  },
   addGenres: (title, genres) => {
     const genreList = genres.map(e => ({ title, genre: e }));
     insertIgnore('genre', genreList).catch(e => logger.error('Error adding genres', e.message));
@@ -190,13 +194,9 @@ module.exports = {
         .toString() + ' ON DUPLICATE KEY UPDATE `list` = VALUES(`list`)';
     knex.raw(q2).catch(err => logger.error('Could not insert Price History', err.message));
   },
-  insertList: list => {
-    const formated = list.map(convertToDBEntry);
-    return knex('deals').insert(formated);
-  },
-  deleteBySource: src => {
+  deleteBySource: (src, group) => {
     return knex('deal')
-      .where('src', src)
+      .where({ src, group })
       .delete();
   }
 };
