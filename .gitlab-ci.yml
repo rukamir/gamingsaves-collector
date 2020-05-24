@@ -21,6 +21,8 @@ stages:
 compile:
   stage: build
   image: docker:latest
+  only:
+    - master
   services:
     - docker:dind
   script:
