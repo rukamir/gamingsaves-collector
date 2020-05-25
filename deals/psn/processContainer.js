@@ -3,7 +3,7 @@ const db = require('../../services/db')
 const processDealRequest = require('./processDealRequest')
 const logger = require('pino')();
 
-module.exports= async ({ lang, region, num, container, name }) => {
+module.exports = async ({ lang, region, num, container, name }) => {
   // Pull per container
   var saleCount = 0;
   try {
@@ -23,19 +23,15 @@ module.exports= async ({ lang, region, num, container, name }) => {
       return;
     }
 
-    // The sale count have changed. Wipe out what we have and over write
-    if (!!filteredCount && filteredCount.count !== saleCount) {
-      logger.info(`${SRC} number of deals changed. Updating deals.`);
-      db.createPriceHistSetToMSRPByGroup(SRC, container, lang, region)
-      db.deleteDealsByGroup(SRC, container, lang, region)
-        .catch(e => logger.warn(`${SRC} error deleting deals`, e.message))
-    }
+    logger.info(`${SRC} number of deals changed. Updating deals.`);
+    db.createPriceHistSetToMSRPByGroup(SRC, container, lang, region)
+    db.deleteDealsByGroup(SRC, container, lang, region)
+      .catch(e => logger.warn(`${SRC} error deleting deals`, e.message))
 
     var currentIndex = 0;
     const groupSize = 30;
     var requestList = [];
-    // const pullDate = new Date();
-    // while (currentIndex < saleCount) {
+
     while (currentIndex < saleCount) {
       requestList.push(
         instance.get(
