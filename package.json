@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start-prod": "NODE_ENV=production node index.js",
-    "start": "node index.js | pino-pretty",
+    "start": "node --unhandled-rejections=strict index.js | pino-pretty",
     "start-nc": "node index.js",
     "test": "jest --coverage",
     "testw": "jest --watchAll --coverage"
