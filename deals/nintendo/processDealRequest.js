@@ -30,7 +30,7 @@ module.exports = async r => {
     const developer = !!developers ? developers[0] : null;
 
     [lang, region] = locale.split('_')
-    const thumbnailKey = `${SRC}/${region}/${lang}/${objectID}`
+    const thumbnailKey = `${SRC}/${lang}/${region}/${objectID}`
     handleThumbnail(axios, BUCKET_NAME, thumbnailKey, SRC, thumbnail_url, logger);
     db.addGenres(cleanedTitle, categories)
     const updated = new Date()

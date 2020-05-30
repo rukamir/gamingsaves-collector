@@ -101,7 +101,7 @@ module.exports = {
                   .toLowerCase()
                   .replace(/[ ]/g, '-')
 
-                const thumbnailKey = `${SRC}/${region}/${lang}/${ProductId}`
+                const thumbnailKey = `${SRC}/${lang}/${region}/${ProductId}`
                 if (!!thumbnail_url) handleThumbnail(axios, BUCKET_NAME, thumbnailKey, SRC, thumbnail_url, logger);
 
                 filtered.push({

@@ -51,7 +51,7 @@ module.exports = async res => {
     }
     const sale_end = new Date(attributes.skus[0].prices['plus-user'].availability['end-date'])
 
-    const thumbnailKey = `${SRC}/${region}/${language}/${id}`
+    const thumbnailKey = `${SRC}/${language}/${region}/${id}`
     handleThumbnail(axios, BUCKET_NAME, thumbnailKey, SRC, thumbnailURL, logger);
     db.addGenres(title, genres);
 
