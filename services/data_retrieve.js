@@ -1,9 +1,12 @@
 const { psn, xbox, nintendo } = require('../deals');
 const metacrit = require('../services/metacoopapi');
+const { deleteExpiredDeals } = require('./support')
 
 module.exports = {
   pullMetaCriticDataNow: async () => metacrit.lookForMissingMetaCriticScores(),
   pullMetaCriticDataAtInterval: () => setInterval(metacrit.lookForMissingMetaCriticScores, 30000),
+  deleteExpiredDealsNow: async () => deleteExpiredDeals(),
+  deleteExpiredDealsAtInterval: async () => setInterval(deleteExpiredDeals, 600000),
   pullAllNow: async () => {
     try {
       await nintendo.retrieveData();

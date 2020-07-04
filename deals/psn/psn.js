@@ -30,8 +30,8 @@ module.exports = {
 
     // Define Regions
     const regions = [
-      { lang: 'en', region: 'US', num: 19 },
-      { lang: 'pt', region: 'BR', num: 19 }
+      { lang: 'en', region: 'US', num: 19 }
+      // { lang: 'pt', region: 'BR', num: 19 }
     ]
 
     // Retrieve Region

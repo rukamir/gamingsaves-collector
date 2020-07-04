@@ -202,5 +202,9 @@ module.exports = {
     return knex('deal')
       .where({ src, group, lang, region })
       .delete();
+  },
+  deleteExpired: () => {
+    return knex
+      .raw('DELETE FROM game.deal WHERE `expire` < NOW() AND `expire` IS NOT NULL')
   }
 };

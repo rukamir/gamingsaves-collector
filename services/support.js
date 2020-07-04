@@ -1,8 +1,14 @@
 const db = require('../services/db');
 const s3 = require('../services/s3');
+const lg = require('pino')();
 
 module.exports = {
   getMetacriticData: (axios, title, platform) => {},
+  deleteExpiredDeals: () => {
+    lg.info(`Checking for expired deals...`)
+    db.deleteExpired()
+      .catch(err => lg.error(`Error deleting expired deals`, err.message))
+  },
   handleThumbnail: (axios, bucket, key, SRC, thumbnailURL, logger) => {
     db.isThumbnailSaved(key, SRC)
       .then(found => {
