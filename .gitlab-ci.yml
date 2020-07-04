@@ -41,9 +41,12 @@ deploy_prod:
     - master
   before_script:
     - apt-get update && apt-get -qq -y install ssh
-  script:
     - chmod 600 $SSH_KEY
     - mkdir -p ~/.ssh
     - '[[ -f /.dockerenv ]] && echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config'
+  script:
     - ssh -i $SSH_KEY jimmy@$PROD_ADDR rm -f /home/jimmy/gamingsaves-collector.docker
     - scp -i $SSH_KEY $CI_PROJECT_DIR/gamingsaves-collector.docker jimmy@$PROD_ADDR:/home/jimmy/gamingsaves-collector.docker
+    - ssh -i $SSH_KEY jimmy@$PROD_ADDR docker load -i /home/jimmy/gamingsaves-collector.docker
+    - ssh -i $SSH_KEY jimmy@$PROD_ADDR /home/jimmy/scripts/collect-stop.sh
+    - ssh -i $SSH_KEY jimmy@$PROD_ADDR /home/jimmy/scripts/collect-start.sh
